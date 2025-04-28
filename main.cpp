@@ -1,38 +1,66 @@
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#include <vulkan/vulkan.h>
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
+#include <iostream>		// reporting errors
+#include <stdexcept>	// reporting errors
+#include <cstdlib>		// miscellaneous utilities (EXIT_SUCCESS, EXIT_FAILURE)
 
-#include <iostream>
+/*
+ * This class stores the Vulkan objects
+ * as private members and interacts with them
+ * through functions
+*/
+class HelloTriangle {
+
+public:
+
+	void run() {
+
+		// If at any time during execution an error occurs,
+		// we'll throw a std::runtime_error exception
+		// which will propagate back to the main function and catched
+		// by the general std::exception
+
+		init_vulkan();
+
+		main_loop();
+
+		cleanup();
+	}
+
+
+private:
+
+	// Initialize the Vulkan objects
+	void init_vulkan() {
+
+	}
+
+	// Iterates render operations until the window is closed
+	void main_loop() {
+
+	}
+
+	// Deallocate resources
+	void cleanup() {
+
+	}
+
+};
 
 
 int main() {
 
-	glfwInit();
+	HelloTriangle application;
 
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	GLFWwindow* window = glfwCreateWindow(800, 600, "My first Vulkan window", nullptr, nullptr);
+	try {
 
-	// Tests Vulkan
-	uint32_t extensions_count = 0;
-	vkEnumerateInstanceExtensionProperties(nullptr, &extensions_count, nullptr);
-	std::cout << extensions_count << " extensions supported \n";
+		application.run();
+	}
+	catch (const std::exception& ex) {
 
-	// Tests GLM
-	glm::mat4 matr;
-	glm::vec4 vec;
-	auto test = matr * vec;
-
-	while (!glfwWindowShouldClose(window)) {
-
-		glfwPollEvents();
+		std::cerr << ex.what() << std::endl;
+		return EXIT_FAILURE;
 	}
 
-	glfwDestroyWindow(window);
-	glfwTerminate();
-
-	return 0;
+	return EXIT_SUCCESS;
 }
