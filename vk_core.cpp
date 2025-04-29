@@ -73,9 +73,9 @@ void create_vk_instance(VkInstance& instance) {
 		LOG_MESSAGE("Available extensions : " + std::to_string(extensions_count), Color::White, Color::Black, 6);
 
 		for (const auto& ext : extensions_detail) {
-			std::string message = ext.extensionName;
-			message += " | v." + std::to_string(ext.specVersion);
-			LOG_MESSAGE(message, Color::White, Color::Black, 8);
+			std::string ext_log = ext.extensionName;
+			ext_log += " | v." + std::to_string(ext.specVersion);
+			LOG_MESSAGE(ext_log, Color::White, Color::Black, 8);
 		}
 	#endif
 
@@ -108,7 +108,16 @@ void select_physical_device(VkInstance instance, VkPhysicalDevice& physical_devi
 	std::vector<VkPhysicalDevice> devices(devices_count);
 	vkEnumeratePhysicalDevices(instance, &devices_count, devices.data());
 
+	LOG_MESSAGE("Available Physical Devices: ", Color::White, Color::Black, 4);
+	LOG_MESSAGE("Name | API | Driver", Color::White, Color::Black, 6);
+	VkPhysicalDeviceProperties device_properties;
 	for (const auto& dev : devices) {
+
+		vkGetPhysicalDeviceProperties(dev, &device_properties);
+		std::string dev_log = device_properties.deviceName;
+		dev_log += " | " + std::to_string(device_properties.apiVersion) +
+			       " | " + std::to_string(device_properties.driverVersion);
+		LOG_MESSAGE(dev_log, Color::White, Color::Black, 6);
 
 		if (check_device_suitable(dev)) {
 			physical_device = dev;
@@ -178,6 +187,8 @@ bool check_device_suitable(VkPhysicalDevice physical_device) {
 
 QueueFamilyIndices check_queue_families(VkPhysicalDevice physical_device) {
 
+	LOG_MESSAGE("Querying Queue Families...", Color::White, Color::Black, 4);
+
 	QueueFamilyIndices indices;
 
 	uint32_t queue_families_count = 0;
@@ -187,8 +198,15 @@ QueueFamilyIndices check_queue_families(VkPhysicalDevice physical_device) {
 	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_families_count, queue_families.data());
 
 	// Request at least one queue family that supports VK_QUEUE_GRAPHICS_BIT
+	LOG_MESSAGE("Available Queue Families:", Color::White, Color::Black, 6);
+	LOG_MESSAGE("Count | Flags | Index", Color::White, Color::Black, 8);
 	int i = 0;
 	for (const auto& qfam : queue_families) {
+
+		std::string qfam_log = std::to_string(qfam.queueCount);
+		qfam_log += " | " + std::to_string(qfam.queueFlags) +
+			        " | " + std::to_string(i);
+		LOG_MESSAGE(qfam_log, Color::White, Color::Black, 8);
 
 		if (qfam.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
 			indices.graphics_family = i;
@@ -200,7 +218,6 @@ QueueFamilyIndices check_queue_families(VkPhysicalDevice physical_device) {
 
 		i++;
 	}
-
 
 	return indices;
 }
