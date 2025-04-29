@@ -9,7 +9,6 @@ using namespace my_util;
 #include <cstring>      // strcmp()
 
 
-// Initialize the Vulkan library
 void create_vk_instance(VkInstance& instance) {
 
 	LOG_MESSAGE("Creating Vulkan Instance...", Color::Yellow, Color::Black, 0);
@@ -38,7 +37,8 @@ void create_vk_instance(VkInstance& instance) {
 	LOG_MESSAGE("Getting validation layers...", Color::White, Color::Black, 4);
 
 	if (ENABLE_VALIDATION_LAYERS && check_validation_layers_support() != VK_SUCCESS) {
-		throw std::runtime_error("Validation layers not available! \n");
+		std::cout << "\033[31;40m";
+		throw std::runtime_error("Validation layers not available!  \033[0m \n");
 	}
 
 	if (ENABLE_VALIDATION_LAYERS) {
@@ -60,6 +60,8 @@ void create_vk_instance(VkInstance& instance) {
 	// Extensions (required by GLFW for the Vulkan instance)
 	LOG_MESSAGE("Getting extensions...", Color::White, Color::Black, 4);
 
+	std::vector<const char*> extensions = check_required_extensions();
+
 	uint32_t extensions_count = 0;
 	vkEnumerateInstanceExtensionProperties(nullptr, &extensions_count, nullptr);
 
@@ -78,18 +80,48 @@ void create_vk_instance(VkInstance& instance) {
 	#endif
 
 	// Set extensions
-	const char** extensions;
-	extensions = glfwGetRequiredInstanceExtensions(&extensions_count);
-
-	instance_info.enabledExtensionCount = extensions_count;
-	instance_info.ppEnabledExtensionNames = extensions;
+	instance_info.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+	instance_info.ppEnabledExtensionNames = extensions.data();
 	instance_info.enabledLayerCount = 0;
 
 
 	if (vkCreateInstance(&instance_info, nullptr, &instance) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create a Vulkan Instance! \n");
+		std::cout << "\033[31;40m";
+		throw std::runtime_error("Failed to create a Vulkan Instance!  \033[0m \n");
 	}
 	LOG_MESSAGE("Vulkan Instance created. \n", Color::Yellow, Color::Black, 0);
+}
+
+
+void select_physical_device(VkInstance instance, VkPhysicalDevice& physical_device) {
+
+	LOG_MESSAGE("Selecting Physical Device...", Color::Yellow, Color::Black, 0);
+
+	uint32_t devices_count = 0;
+	vkEnumeratePhysicalDevices(instance, &devices_count, nullptr);
+
+	if (devices_count == 0) {
+		std::cout << "\033[31;40m";
+		throw std::runtime_error("No GPU with Vulkan support found! \033[0m \n");
+	}
+
+	std::vector<VkPhysicalDevice> devices(devices_count);
+	vkEnumeratePhysicalDevices(instance, &devices_count, devices.data());
+
+	for (const auto& dev : devices) {
+
+		if (check_device_suitable(dev)) {
+			physical_device = dev;
+			break;
+		}
+	}
+
+	if (physical_device == VK_NULL_HANDLE) {
+		std::cout << "\033[31;40m";
+		throw std::runtime_error("No suitable GPU found! \033[0m \n");
+	}
+
+	LOG_MESSAGE("Physical Device selected. \n", Color::Yellow, Color::Black, 0);
 }
 
 
@@ -118,4 +150,57 @@ VkResult check_validation_layers_support() {
 	}
 
 	return VK_SUCCESS;
+}
+
+
+std::vector<const char*> check_required_extensions() {
+
+	uint32_t extensions_count = 0;
+	const char** glfw_extensions;
+
+	glfw_extensions = glfwGetRequiredInstanceExtensions(&extensions_count);
+	std::vector<const char*> extensions(glfw_extensions, glfw_extensions + extensions_count);
+
+	if (ENABLE_VALIDATION_LAYERS) {
+		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	}
+
+	return extensions;
+}
+
+
+bool check_device_suitable(VkPhysicalDevice physical_device) {
+
+	QueueFamilyIndices indices = check_queue_families(physical_device);
+	return indices.is_complete();
+}
+
+
+QueueFamilyIndices check_queue_families(VkPhysicalDevice physical_device) {
+
+	QueueFamilyIndices indices;
+
+	uint32_t queue_families_count = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_families_count, nullptr);
+
+	std::vector<VkQueueFamilyProperties> queue_families(queue_families_count);
+	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_families_count, queue_families.data());
+
+	// Request at least one queue family that supports VK_QUEUE_GRAPHICS_BIT
+	int i = 0;
+	for (const auto& qfam : queue_families) {
+
+		if (qfam.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+			indices.graphics_family = i;
+		}
+
+		if (indices.is_complete()) {
+			break;
+		}
+
+		i++;
+	}
+
+
+	return indices;
 }
