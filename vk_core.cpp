@@ -87,13 +87,13 @@ void create_vk_instance(VkInstance& instance) {
 
 	if (vkCreateInstance(&instance_info, nullptr, &instance) != VK_SUCCESS) {
 		std::cout << "\033[31;40m";
-		throw std::runtime_error("Failed to create a Vulkan Instance!  \033[0m \n");
+		throw std::runtime_error("Failed to create Vulkan Instance!  \033[0m \n");
 	}
 	LOG_MESSAGE("Vulkan Instance created. \n", Color::Yellow, Color::Black, 0);
 }
 
 
-void select_physical_device(VkInstance instance, VkPhysicalDevice& physical_device) {
+void select_physical_device(VkPhysicalDevice& physical_device, VkInstance instance) {
 
 	LOG_MESSAGE("Selecting Physical Device...", Color::Yellow, Color::Black, 0);
 
@@ -131,6 +131,52 @@ void select_physical_device(VkInstance instance, VkPhysicalDevice& physical_devi
 	}
 
 	LOG_MESSAGE("Physical Device selected. \n", Color::Yellow, Color::Black, 0);
+}
+
+
+void create_logical_device(VkDevice& device, VkPhysicalDevice physical_device, VkInstance instance) {
+
+	LOG_MESSAGE("Creating Vulkan Logical Device...", Color::Yellow, Color::Black, 0);
+
+	// Specify the queues to be created
+	QueueFamilyIndices indices = check_queue_families(physical_device);
+
+	// For now we only want queue with graphics capabilities
+	VkDeviceQueueCreateInfo queue_info{};
+	queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queue_info.queueFamilyIndex = indices.graphics_family.value();
+	queue_info.queueCount = 1;
+	float queue_priority = 1.0f;
+	queue_info.pQueuePriorities = &queue_priority;
+
+
+	// Specify device features, previously queried with vkGetPhysicalDeviceFeatures()
+	// For now we don't need anything special, so we simply define it.
+	VkPhysicalDeviceFeatures device_features{};
+
+
+	// Create device
+	VkDeviceCreateInfo device_info{};
+	device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	device_info.pQueueCreateInfos = &queue_info;
+	device_info.queueCreateInfoCount = 1;
+	device_info.pEnabledFeatures = &device_features;
+	device_info.enabledExtensionCount = 0;
+
+	if (ENABLE_VALIDATION_LAYERS) {
+		device_info.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
+		device_info.ppEnabledLayerNames = VALIDATION_LAYERS.data();
+	}
+	else {
+		device_info.enabledLayerCount = 0;
+	}
+
+
+	if (vkCreateDevice(physical_device, &device_info, nullptr, &device) != VK_SUCCESS) {
+		std::cout << "\033[31;40m";
+		throw std::runtime_error("Failed to create Vulkan Logical Device!  \033[0m \n");
+	}
+	LOG_MESSAGE("Vulkan Logical Device created. \n", Color::Yellow, Color::Black, 0);
 }
 
 

@@ -44,6 +44,7 @@ private:
 
 	VkInstance instance;
 	VkPhysicalDevice physical_device = VK_NULL_HANDLE; // implicitly destroyed
+	VkDevice device;
 
 	GLFWwindow* window;
 
@@ -65,7 +66,9 @@ private:
 
 		create_vk_instance(instance);
 
-		select_physical_device(instance, physical_device);
+		select_physical_device(physical_device, instance);
+
+		create_logical_device(device, physical_device, instance);
 	}
 
 
@@ -83,7 +86,10 @@ private:
 	// Deallocate resources
 	void cleanup() {
 
-		LOG_MESSAGE("Destroying the Vulkan Instance... \n", Color::Bright_Blue, Color::Black, 0);
+		LOG_MESSAGE("Destroying the Vulkan Logical Device...", Color::Bright_Blue, Color::Black, 0);
+		vkDestroyDevice(device, nullptr);
+
+		LOG_MESSAGE("Destroying the Vulkan Instance...", Color::Bright_Blue, Color::Black, 0);
 		vkDestroyInstance(instance, nullptr);
 
 		glfwDestroyWindow(window);
