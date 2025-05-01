@@ -46,6 +46,8 @@ private:
 	VkPhysicalDevice physical_device = VK_NULL_HANDLE; // implicitly destroyed
 	VkDevice device;
 
+	VkQueue queue_graphics; // implicitly destroyed
+
 	GLFWwindow* window;
 
 
@@ -68,7 +70,7 @@ private:
 
 		select_physical_device(physical_device, instance);
 
-		create_logical_device(device, physical_device, instance);
+		create_logical_device(device, queue_graphics, physical_device, instance);
 	}
 
 

@@ -22,11 +22,11 @@ This is only **one** way to configure the project! I preferred to do it this way
   
     - Paste in the ***libraries*** folder the **GLFW** and **GLM** **files**.
   
-    - Not all the libraries files needs to be pasted, just the following:
+    - Not all the libraries files needs to be pasted, just the following subfolders:
       - **GLFW**: *include* and *lib-vc2022* folders
       - **GLM**: *glm* folder
    
-    - (But if you don't want to make errors, just paste directly all the files :) )
+    - (But if you don't want to make errors, just paste directly all the files/subfolders after the download :) )
 
 <br>
 

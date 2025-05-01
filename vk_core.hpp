@@ -37,7 +37,7 @@ void select_physical_device(VkPhysicalDevice& physical_device, VkInstance instan
 
 
 // Initialize Logical Device
-void create_logical_device(VkDevice& device, VkPhysicalDevice physical_device, VkInstance instance);
+void create_logical_device(VkDevice& device, VkQueue& queue_graphics, VkPhysicalDevice physical_device, VkInstance instance);
 
 
 // Check which validation layers are available

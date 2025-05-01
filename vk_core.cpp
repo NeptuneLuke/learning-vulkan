@@ -134,7 +134,7 @@ void select_physical_device(VkPhysicalDevice& physical_device, VkInstance instan
 }
 
 
-void create_logical_device(VkDevice& device, VkPhysicalDevice physical_device, VkInstance instance) {
+void create_logical_device(VkDevice& device, VkQueue& queue_graphics, VkPhysicalDevice physical_device, VkInstance instance) {
 
 	LOG_MESSAGE("Creating Vulkan Logical Device...", Color::Yellow, Color::Black, 0);
 
@@ -176,6 +176,9 @@ void create_logical_device(VkDevice& device, VkPhysicalDevice physical_device, V
 		std::cout << "\033[31;40m";
 		throw std::runtime_error("Failed to create Vulkan Logical Device!  \033[0m \n");
 	}
+
+	vkGetDeviceQueue(device, indices.graphics_family.value(), 0, &queue_graphics);
+
 	LOG_MESSAGE("Vulkan Logical Device created. \n", Color::Yellow, Color::Black, 0);
 }
 
