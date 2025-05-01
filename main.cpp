@@ -41,14 +41,17 @@ public:
 
 private:
 
-	VkInstance instance;
-	VkPhysicalDevice physical_device = VK_NULL_HANDLE; // implicitly destroyed
-	VkDevice device;
-
-	VkQueue queue_graphics; // implicitly destroyed
-
 	GLFWwindow* window;
 
+	VkInstance instance;
+	VkSurfaceKHR surface;
+
+	VkPhysicalDevice physical_device = VK_NULL_HANDLE; // implicitly destroyed in vkDestroyInstance()
+	VkDevice device;
+
+	// All queues are implicitly destoyed in vkDestroyDevice()
+	VkQueue queue_graphics;
+	VkQueue queue_present;
 
 	/* -------------------- -------------------- */
 	// Initialize a GLFW window
@@ -59,7 +62,7 @@ private:
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // Do not create an OpenGL context -> GLFW_NO_API
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);	  // For now, disable window resizing
 
-		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan tutorial", nullptr, nullptr);
 	}
 
 	// Initialize the Vulkan objects
@@ -67,9 +70,11 @@ private:
 
 		create_vk_instance(instance);
 
-		select_physical_device(physical_device, instance);
+		create_vk_surface(surface, instance, window);
 
-		create_logical_device(device, queue_graphics, physical_device, instance);
+		select_physical_device(physical_device, instance, surface);
+
+		create_logical_device(device, physical_device, instance, surface, queue_graphics, queue_present);
 	}
 
 
@@ -88,9 +93,14 @@ private:
 	void cleanup() {
 
 		LOG_MESSAGE("Destroying the Vulkan Logical Device...", Color::Bright_Blue, Color::Black, 0);
+		LOG_MESSAGE("Destroying Queues...", Color::Bright_Blue, Color::Black, 4);
 		vkDestroyDevice(device, nullptr);
 
+		LOG_MESSAGE("Destroying the Vulkan-Windows Surface...", Color::Bright_Blue, Color::Black, 0);
+		vkDestroySurfaceKHR(instance, surface, nullptr);
+
 		LOG_MESSAGE("Destroying the Vulkan Instance...", Color::Bright_Blue, Color::Black, 0);
+		LOG_MESSAGE("Destroying the Vulkan Physical Device...", Color::Bright_Blue, Color::Black, 4);
 		vkDestroyInstance(instance, nullptr);
 
 		glfwDestroyWindow(window);
