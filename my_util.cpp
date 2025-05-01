@@ -7,10 +7,10 @@
 void my_util::LOG_MESSAGE(std::string message, Color text, Color background, uint16_t indentation_width) {
 
 	// Default white text on black background: \033[0m
-
-	std::string colors;
+	std::string colors = "\033[0m";
 
 	switch (text) {
+		default:
 		case Color::Black:   { colors = "\033[30;"; break; }
 		case Color::Red:     { colors = "\033[31;"; break; }
 		case Color::Green:   { colors = "\033[32;"; break; }
@@ -31,6 +31,7 @@ void my_util::LOG_MESSAGE(std::string message, Color text, Color background, uin
 	}
 
 	switch (background) {
+		default:
 		case Color::Black:   { colors += "40m"; break; }
 		case Color::Red:     { colors += "41m"; break; }
 		case Color::Green:   { colors += "42m"; break; }
@@ -54,6 +55,7 @@ void my_util::LOG_MESSAGE(std::string message, Color text, Color background, uin
 		std::cout << colors << std::setfill(' ') << std::setw(indentation_width) << ' ' << message << "\033[0m \n";
 	}
 	else {
+		// else do not indent text
 		std::cout << colors << message << "\033[0m \n";
 	}
 

@@ -130,64 +130,9 @@ void select_physical_device(VkPhysicalDevice& physical_device, VkInstance instan
 	std::vector<VkPhysicalDevice> devices(devices_count);
 	vkEnumeratePhysicalDevices(instance, &devices_count, devices.data());
 
-	LOG_MESSAGE("Available Physical Devices: ", Color::Bright_White, Color::Black, 4);
-	LOG_MESSAGE("Name \t\t\t | Type \t | Vulkan API \t | Driver \t | Memory", Color::White, Color::Black, 6);
-	VkPhysicalDeviceProperties device_properties;
 	for (const auto& dev : devices) {
 
-		vkGetPhysicalDeviceProperties(dev, &device_properties);
-		VkPhysicalDeviceMemoryProperties device_memory;
-		vkGetPhysicalDeviceMemoryProperties(dev, &device_memory);
-
-		std::string dev_log = device_properties.deviceName ;
-
-		std::string type = " | Unknown";
-		switch (device_properties.deviceType) {
-
-			default:
-
-			case VK_PHYSICAL_DEVICE_TYPE_OTHER:
-				type = "Unknown";
-				break;
-
-			case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-				type = "Integrated";
-				break;
-
-			case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-				type = "Discrete";
-				break;
-
-			case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
-				type = "Virtual";
-				break;
-
-			case VK_PHYSICAL_DEVICE_TYPE_CPU:
-				type = "CPU";
-				break;
-		}
-
-		float memory_gib = 0.0f;
-		for (uint32_t i = 0; i < device_memory.memoryHeapCount; i++) {
-
-			memory_gib = ((static_cast<float>(device_memory.memoryHeaps[i].size)) / 1024.0f / 1024.0f / 1024.0f);
-		}
-
-		dev_log += " \t | "
-			    + type
-			    + " \t | "
-				+ std::to_string(VK_VERSION_MAJOR(device_properties.apiVersion)) + "."
-				+ std::to_string(VK_VERSION_MINOR(device_properties.apiVersion)) + "."
-				+ std::to_string(VK_VERSION_PATCH(device_properties.apiVersion))
-				+ " \t | "
-				+ std::to_string(VK_VERSION_MAJOR(device_properties.driverVersion)) + "."
-				+ std::to_string(VK_VERSION_MINOR(device_properties.driverVersion)) + "."
-				+ std::to_string(VK_VERSION_PATCH(device_properties.driverVersion))
-			    + " \t | "
-			    + std::to_string(memory_gib)
-			    + " GiB";
-
-		LOG_MESSAGE(dev_log, Color::White, Color::Black, 6);
+		print_physical_devices(dev);
 
 		if (check_device_suitable(dev, surface)) {
 			physical_device = dev;
@@ -363,4 +308,66 @@ QueueFamilyIndices check_queue_families(VkPhysicalDevice physical_device, VkSurf
 	}
 
 	return indices;
+}
+
+
+void print_physical_devices(VkPhysicalDevice dev) {
+
+	LOG_MESSAGE("Available Physical Devices: ", Color::Bright_White, Color::Black, 4);
+	LOG_MESSAGE("Name \t\t\t | Type \t | Vulkan API \t | Driver \t | Memory", Color::White, Color::Black, 6);
+
+	VkPhysicalDeviceProperties device_properties;
+	vkGetPhysicalDeviceProperties(dev, &device_properties);
+	VkPhysicalDeviceMemoryProperties device_memory;
+	vkGetPhysicalDeviceMemoryProperties(dev, &device_memory);
+
+	std::string dev_log = device_properties.deviceName;
+
+	std::string type = " | Unknown";
+	switch (device_properties.deviceType) {
+
+		default:
+
+		case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+			type = "Unknown";
+			break;
+
+		case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+			type = "Integrated";
+			break;
+
+		case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+			type = "Discrete";
+			break;
+
+		case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+			type = "Virtual";
+			break;
+
+		case VK_PHYSICAL_DEVICE_TYPE_CPU:
+			type = "CPU";
+			break;
+	}
+
+	float memory_gib = 0.0f;
+	for (uint32_t i = 0; i < device_memory.memoryHeapCount; i++) {
+
+		memory_gib = ((static_cast<float>(device_memory.memoryHeaps[i].size)) / 1024.0f / 1024.0f / 1024.0f);
+	}
+
+	dev_log += " \t | "
+		+ type
+		+ " \t | "
+		+ std::to_string(VK_VERSION_MAJOR(device_properties.apiVersion)) + "."
+		+ std::to_string(VK_VERSION_MINOR(device_properties.apiVersion)) + "."
+		+ std::to_string(VK_VERSION_PATCH(device_properties.apiVersion))
+		+ " \t | "
+		+ std::to_string(VK_VERSION_MAJOR(device_properties.driverVersion)) + "."
+		+ std::to_string(VK_VERSION_MINOR(device_properties.driverVersion)) + "."
+		+ std::to_string(VK_VERSION_PATCH(device_properties.driverVersion))
+		+ " \t | "
+		+ std::to_string(memory_gib)
+		+ " GiB";
+
+	LOG_MESSAGE(dev_log, Color::White, Color::Black, 6);
 }

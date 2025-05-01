@@ -64,6 +64,9 @@ std::vector<const char*> check_required_extensions();
 bool check_device_suitable(VkPhysicalDevice physical_device, VkSurfaceKHR surface);
 
 
-// Check for queue families supporte by the
-// physical device
+// Check for queue families supported by the physical device
 QueueFamilyIndices check_queue_families(VkPhysicalDevice physical_device, VkSurfaceKHR surface);
+
+
+// Print physical devices features in detail
+void print_physical_devices(VkPhysicalDevice dev);
