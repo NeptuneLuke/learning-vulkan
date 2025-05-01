@@ -53,6 +53,8 @@ private:
 	VkQueue queue_graphics;
 	VkQueue queue_present;
 
+	VkSwapchainKHR swapchain;
+
 	/* -------------------- -------------------- */
 	// Initialize a GLFW window
 	void init_window() {
@@ -75,6 +77,8 @@ private:
 		select_physical_device(physical_device, instance, surface);
 
 		create_logical_device(device, physical_device, instance, surface, queue_graphics, queue_present);
+
+		create_swapchain(swapchain, surface, window, physical_device, device);
 	}
 
 
@@ -89,8 +93,11 @@ private:
 
 	}
 
-	// Deallocate resources
+	// Deallocate resources in opposite order of creation
 	void cleanup() {
+
+		LOG_MESSAGE("Destroying the Vulkan Swapchain...", Color::Bright_Blue, Color::Black, 0);
+		vkDestroySwapchainKHR(device, swapchain, nullptr);
 
 		LOG_MESSAGE("Destroying the Vulkan Logical Device...", Color::Bright_Blue, Color::Black, 0);
 		LOG_MESSAGE("Destroying Queues...", Color::Bright_Blue, Color::Black, 4);

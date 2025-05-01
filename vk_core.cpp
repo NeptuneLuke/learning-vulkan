@@ -6,6 +6,8 @@
 #include <string>
 #include <cstring>      // strcmp()
 #include <set>
+#include <algorithm>    // clamp()
+#include <limits>
 
 using namespace my_util;
 
@@ -34,6 +36,7 @@ void create_vk_instance(VkInstance& instance) {
 	instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	instance_info.pApplicationInfo = &app_info;
 
+
 	// Validation Layers
 	LOG_MESSAGE("Getting validation layers...", Color::Bright_White, Color::Black, 4);
 
@@ -58,22 +61,25 @@ void create_vk_instance(VkInstance& instance) {
 	}
 
 
-	// Extensions (required by GLFW for the Vulkan instance)
+	// Extensions are required by GLFW.
+	// In particular, VK_KHR_surface and VK_KHR_win32_surface are required.
 	LOG_MESSAGE("Getting extensions...", Color::Bright_White, Color::Black, 4);
 
-	std::vector<const char*> extensions = check_required_extensions();
-
+	std::vector<const char*> extensions = check_glfw_required_extensions();
 	uint32_t extensions_count = 0;
 	vkEnumerateInstanceExtensionProperties(nullptr, &extensions_count, nullptr);
 
 	// Query extensions details
 	#ifdef _DEBUG
+
+		// Get all available extensions for our system
 		std::vector<VkExtensionProperties> extensions_detail(extensions_count);
 		vkEnumerateInstanceExtensionProperties(nullptr, &extensions_count, extensions_detail.data());
 
 		LOG_MESSAGE("Available extensions : " + std::to_string(extensions_count), Color::White, Color::Black, 6);
 
 		for (const auto& ext : extensions_detail) {
+
 			std::string ext_log = ext.extensionName;
 			ext_log += " | v." + std::to_string(ext.specVersion);
 			LOG_MESSAGE(ext_log, Color::White, Color::Black, 8);
@@ -98,12 +104,12 @@ void create_vk_surface(VkSurfaceKHR& surface, VkInstance instance, GLFWwindow* w
 
 	LOG_MESSAGE("Creating Vulkan-Windows Surface...", Color::Yellow, Color::Black, 0);
 
-	VkWin32SurfaceCreateInfoKHR surface_info{};
-	surface_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-	surface_info.hwnd = glfwGetWin32Window(window); // window handle
-	surface_info.hinstance = GetModuleHandle(nullptr);
+	VkWin32SurfaceCreateInfoKHR win32_surface_info{};
+	win32_surface_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+	win32_surface_info.hwnd = glfwGetWin32Window(window); // window handle
+	win32_surface_info.hinstance = GetModuleHandle(nullptr);
 
-	if (vkCreateWin32SurfaceKHR(instance, &surface_info, nullptr, &surface) != VK_SUCCESS) {
+	if (vkCreateWin32SurfaceKHR(instance, &win32_surface_info, nullptr, &surface) != VK_SUCCESS) {
 		std::cout << "\033[31;40m";
 		throw std::runtime_error("Failed to create Vulkan-Windows Surface! \033[0m \n");
 	}
@@ -127,6 +133,7 @@ void select_physical_device(VkPhysicalDevice& physical_device, VkInstance instan
 		throw std::runtime_error("No GPU with Vulkan support found! \033[0m \n");
 	}
 
+	// Get all physical devices
 	std::vector<VkPhysicalDevice> devices(devices_count);
 	vkEnumeratePhysicalDevices(instance, &devices_count, devices.data());
 
@@ -180,15 +187,18 @@ void create_logical_device(VkDevice& device, VkPhysicalDevice physical_device, V
 	// For now we don't need anything special, so we simply define it.
 	VkPhysicalDeviceFeatures device_features{};
 
-	// Create device
+	// Create logical device
 	VkDeviceCreateInfo device_info{};
 	device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	device_info.queueCreateInfoCount = static_cast<uint32_t>(queue_info.size());
 	device_info.pQueueCreateInfos = queue_info.data();
 	device_info.pEnabledFeatures = &device_features;
-	device_info.enabledExtensionCount = 0;
 
-	// Setup validation layers to device
+	// Setup required extensions
+	device_info.enabledExtensionCount = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
+	device_info.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
+
+	// Setup validation layers
 	if (ENABLE_VALIDATION_LAYERS) {
 		device_info.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
 		device_info.ppEnabledLayerNames = VALIDATION_LAYERS.data();
@@ -208,6 +218,175 @@ void create_logical_device(VkDevice& device, VkPhysicalDevice physical_device, V
 	vkGetDeviceQueue(device, indices.present_family.value(), 0, &queue_present);
 
 	LOG_MESSAGE("Vulkan Logical Device created. \n", Color::Yellow, Color::Black, 0);
+}
+
+
+void create_swapchain(VkSwapchainKHR& swapchain, VkSurfaceKHR surface, GLFWwindow* window, VkPhysicalDevice physical_device, VkDevice device) {
+
+	LOG_MESSAGE("Creating Vulkan Swapchain...", Color::Yellow, Color::Black, 0);
+
+	SwapchainSupportDetails swapchain_support = query_swapchain_support(surface, physical_device);
+
+	VkSurfaceFormatKHR surface_format = choose_swapchain_surface_format(swapchain_support.formats);
+	VkPresentModeKHR present_mode = choose_swapchain_present_mode(swapchain_support.present_modes);
+	VkExtent2D extent = choose_swapchain_extent(window, swapchain_support.capabilities);
+
+	// Also set how many images we want to the swapchain. Not required.
+	// Set to at least one more image than the minimum to avoid waiting on the driver
+	// to complete internal operations befoe we can acquire another image to render to.
+	uint32_t images_count = swapchain_support.capabilities.minImageCount + 1;
+
+	// Also do not exceed the maximum number supported.
+	if (swapchain_support.capabilities.maxImageCount > 0
+		&& images_count > swapchain_support.capabilities.maxImageCount) {
+
+		images_count = swapchain_support.capabilities.maxImageCount;
+	}
+
+	// Setup the swapchain
+	VkSwapchainCreateInfoKHR swapchain_info{};
+	swapchain_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	swapchain_info.surface = surface;
+	swapchain_info.minImageCount = images_count;
+	swapchain_info.imageFormat = surface_format.format;
+	swapchain_info.imageColorSpace = surface_format.colorSpace;
+	swapchain_info.imageExtent = extent;
+	swapchain_info.imageArrayLayers = 1; // amount of layers of each image (basically always 1)
+	swapchain_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; // images are used as color attachment because we render them directly
+
+	// Specify that the swapchain images will be used across multiple queue families.
+	// We will be drawing the images in the swapchain from the graphics queue and
+	// then submitting them to the presentation queue.
+	QueueFamilyIndices indices = check_queue_families(physical_device, surface);
+	uint32_t queue_family_indices[] = {
+		indices.graphics_family.value(),
+		indices.present_family.value() };
+
+	if (indices.graphics_family != indices.present_family) {
+		swapchain_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		swapchain_info.queueFamilyIndexCount = 2;
+		swapchain_info.pQueueFamilyIndices = queue_family_indices;
+	}
+	else {
+		swapchain_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		swapchain_info.queueFamilyIndexCount = 0; // optional
+		swapchain_info.pQueueFamilyIndices = nullptr; // optional
+	}
+
+	// We can specify that a transform should be applied to images in the swapchain
+	// if it is supported : swapchain_support.capabilities.supportedTransform
+	// We will not use this feature, so specify the current transform.
+	swapchain_info.preTransform = swapchain_support.capabilities.currentTransform;
+
+	// Specify if the alpha channel should be used for blending with other windows
+	// in the window system. Basically always ignore it, so specify VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR.
+	swapchain_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+	swapchain_info.presentMode = present_mode;
+	swapchain_info.clipped = VK_TRUE; // enables clipping
+	swapchain_info.oldSwapchain = VK_NULL_HANDLE; // For now, we assume we will only create 1 swapchain
+
+
+	if (vkCreateSwapchainKHR(device, &swapchain_info, nullptr, &swapchain) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create Vulkan Swapchain! \033[0m \n");
+	}
+
+	LOG_MESSAGE("Vulkan Swapchain created. \n", Color::Yellow, Color::Black, 0);
+}
+
+
+SwapchainSupportDetails query_swapchain_support(VkSurfaceKHR surface, VkPhysicalDevice physical_device) {
+
+	SwapchainSupportDetails details;
+
+	// Set supported capabilities
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &details.capabilities);
+
+
+	// Query supported surface formats
+	uint32_t formats_count;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &formats_count, nullptr);
+
+	if (formats_count != 0) {
+		details.formats.resize(formats_count);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &formats_count, details.formats.data());
+	}
+
+	// Query supported presentation modes
+	uint32_t present_count;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &present_count, nullptr);
+
+	if (present_count != 0) {
+		details.present_modes.resize(present_count);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &present_count, details.present_modes.data());
+	}
+
+	return details;
+}
+
+
+VkSurfaceFormatKHR choose_swapchain_surface_format(const std::vector<VkSurfaceFormatKHR>& available_formats) {
+
+	for (const auto& form : available_formats) {
+
+		// Format is 8 bits B,G,R,A channels
+		// Color space is SRGB
+		if (form.format == VK_FORMAT_B8G8R8A8_SRGB && form.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+			return form;
+		}
+	}
+
+	// If the format VK_FORMAT_B8G8R8A8_SRGB, SRGB is not found,
+	// return the first format retrieved
+	return available_formats[0];
+}
+
+
+VkPresentModeKHR choose_swapchain_present_mode(const std::vector<VkPresentModeKHR>& available_present_modes) {
+
+	for (const auto& pmode : available_present_modes) {
+
+		// A variation of VK_PRESENT_MODE_FIFO_KHR.
+		// Instead of blocking the application when the queue is full, the images that are already queued
+		// are simply replaced with the newer ones. This mode can be used to render frames as fast as possible.
+		// It is also known as triple buffering.
+		if (pmode == VK_PRESENT_MODE_MAILBOX_KHR) {
+			return pmode;
+		}
+	}
+
+	// The swapchain is a queue where the display takes an image from the front of the queue
+	// when the display is refreshed and the program inserts rendered images at the back of the queue.
+	// If the queue is full then the program has to wait. This is most similar to vertical sync as found in modern games.
+	// The moment that the display is refreshed is known as "vertical blank".
+	return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+
+VkExtent2D choose_swapchain_extent(GLFWwindow* window, const VkSurfaceCapabilitiesKHR& capabilities) {
+
+	// The swap extent is the resolution of the swapchain images and
+	// it's almost always exactly equal to the resolution of the window
+	// that we're drawing to in pixels.
+
+	// UINT32_MAX == std::numeric_limits<uint32_t>::max()
+	if (capabilities.currentExtent.width != UINT32_MAX) {
+		return capabilities.currentExtent;
+	}
+	else {
+		int width, height;
+		glfwGetFramebufferSize(window, &width, &height);
+
+		VkExtent2D extent = { static_cast<uint32_t>(width),
+		                      static_cast<uint32_t>(height) };
+
+		// Bound the values of width and height between the min and max extents
+		// supported by the swapchain
+		extent.width = std::clamp(extent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+		extent.height = std::clamp(extent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+
+		return extent;
+	}
 }
 
 
@@ -239,7 +418,7 @@ VkResult check_validation_layers_support() {
 }
 
 
-std::vector<const char*> check_required_extensions() {
+std::vector<const char*> check_glfw_required_extensions() {
 
 	uint32_t extensions_count = 0;
 	const char** glfw_extensions;
@@ -247,18 +426,57 @@ std::vector<const char*> check_required_extensions() {
 	glfw_extensions = glfwGetRequiredInstanceExtensions(&extensions_count);
 	std::vector<const char*> extensions(glfw_extensions, glfw_extensions + extensions_count);
 
+	LOG_MESSAGE("GLFW Required extensions:", Color::White, Color::Black, 6);
+	for (const auto& ext : extensions) {
+		LOG_MESSAGE(ext, Color::White, Color::Black, 8);
+	}
+
 	if (ENABLE_VALIDATION_LAYERS) {
-		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME); // Debug messenger extension
 	}
 
 	return extensions;
 }
 
 
+bool check_device_extension_support(VkPhysicalDevice physical_device) {
+
+	uint32_t extensions_count;
+	vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &extensions_count, nullptr);
+
+	// Get all the available device extensions
+	std::vector<VkExtensionProperties> extensions(extensions_count);
+	vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &extensions_count, extensions.data());
+
+	// Get only required extensions
+	std::set<std::string> required_extensions(DEVICE_EXTENSIONS.begin(), DEVICE_EXTENSIONS.end());
+
+	// Overlap required with device supported extensions
+	for (const auto& ext : extensions) {
+		required_extensions.erase(ext.extensionName);
+	}
+
+	return required_extensions.empty();
+}
+
+
 bool check_device_suitable(VkPhysicalDevice physical_device, VkSurfaceKHR surface) {
 
 	QueueFamilyIndices indices = check_queue_families(physical_device, surface);
-	return indices.is_complete();
+
+	bool extensions_supported = check_device_extension_support(physical_device);
+
+	// Swapchain support is sufficient if there is at least one supported
+	// image format and one supported presentation mode for the surface provided
+	bool swapchain_adequate = false;
+	if (extensions_supported) {
+		SwapchainSupportDetails swapchain_support = query_swapchain_support(surface, physical_device);
+		swapchain_adequate = !swapchain_support.formats.empty() && !swapchain_support.present_modes.empty();
+	}
+
+	// Only query for swapchain support after veryfying that the swapchain extension
+	// ( VK_KHR_SWAPCHAIN_EXTENSION_NAME ) is available
+	return indices.is_complete() && extensions_supported && swapchain_adequate;
 }
 
 
