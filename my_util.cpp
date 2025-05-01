@@ -1,13 +1,13 @@
+#include "my_util.hpp"
+
 #include <iostream>
 #include <iomanip>
-
-#include "util.hpp"
-using namespace my_util;
 
 
 void my_util::LOG_MESSAGE(std::string message, Color text, Color background, uint16_t indentation_width) {
 
-	// Default white text on black background
+	// Default white text on black background: \033[0m
+
 	std::string colors;
 
 	switch (text) {

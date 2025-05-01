@@ -156,11 +156,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="util.cpp" />
+    <ClCompile Include="my_util.cpp" />
     <ClCompile Include="vk_core.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="util.hpp" />
+    <ClInclude Include="my_util.hpp" />
     <ClInclude Include="vk_core.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

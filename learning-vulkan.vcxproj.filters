@@ -18,7 +18,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="util.cpp">
+    <ClCompile Include="my_util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vk_core.cpp">
@@ -26,7 +26,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="util.hpp">
+    <ClInclude Include="my_util.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vk_core.hpp">

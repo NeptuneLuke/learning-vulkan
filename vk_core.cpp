@@ -1,12 +1,12 @@
 #include "vk_core.hpp"
-
-#include "util.hpp"
-using namespace my_util;
+#include "my_util.hpp"
 
 #include <iostream>		// reporting errors
 #include <stdexcept>	// reporting errors
 #include <string>
 #include <cstring>      // strcmp()
+
+using namespace my_util;
 
 
 void create_vk_instance(VkInstance& instance) {

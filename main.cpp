@@ -1,12 +1,11 @@
 #include "vk_core.hpp"
-
-#include "util.hpp"
-using namespace my_util;
+#include "my_util.hpp"
 
 #include <iostream>		// reporting errors
 #include <stdexcept>	// reporting errors
 #include <cstdlib>		// miscellaneous utilities (EXIT_SUCCESS, EXIT_FAILURE)
 
+using namespace my_util;
 
 
 /* -------------------- -------------------- */
