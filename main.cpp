@@ -5,7 +5,8 @@
 #include <stdexcept>	// reporting errors
 #include <cstdlib>		// miscellaneous utilities (EXIT_SUCCESS, EXIT_FAILURE)
 
-using namespace my_util;
+
+using namespace my_util; // my_util.hpp
 
 
 /* -------------------- -------------------- */
@@ -73,15 +74,19 @@ private:
 	// Initialize the Vulkan objects
 	void init_vulkan() {
 
-		create_vk_instance(instance);
+		vk_core::create_vk_instance(instance);
 
-		create_vk_surface(surface, instance, window);
+		vk_core::create_vk_surface(surface, instance, window);
 
-		select_physical_device(physical_device, instance, surface);
+		vk_core::select_physical_device(physical_device, instance, surface);
 
-		create_logical_device(device, physical_device, instance, surface, queue_graphics, queue_present);
+		vk_core::create_logical_device(device, physical_device,
+			                           instance, surface,
+			                           queue_graphics, queue_present);
 
-		create_swapchain(swapchain, swapchain_images, swapchain_image_format, swapchain_extent, surface, window, physical_device, device);
+		vk_core::create_swapchain(swapchain, swapchain_images,
+			                      swapchain_image_format, swapchain_extent,
+			                      surface, window, physical_device, device);
 	}
 
 

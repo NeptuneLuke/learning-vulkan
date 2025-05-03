@@ -6,8 +6,7 @@
 namespace my_util {
 
 
-enum Color
-{
+enum Color {
 	Black, Red, Green, Yellow, Blue, Magenta, Cyan, White,
 	Bright_Black, Bright_Red, Bright_Green, Bright_Yellow,
 	Bright_Blue, Bright_Magenta, Bright_Cyan, Bright_White

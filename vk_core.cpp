@@ -9,8 +9,11 @@
 #include <algorithm>    // clamp()
 #include <limits>
 
-using namespace my_util;
 
+using namespace my_util; // my_util.hpp
+
+
+namespace vk_core {
 
 void create_vk_instance(VkInstance& instance) {
 
@@ -600,3 +603,5 @@ void print_physical_devices(VkPhysicalDevice dev) {
 
 	LOG_MESSAGE(dev_log, Color::White, Color::Black, 6);
 }
+
+} // namespace vk_core

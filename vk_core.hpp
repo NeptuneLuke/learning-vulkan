@@ -11,7 +11,9 @@
 #include <optional>     // has_value()
 
 
-/* -------------------- -------------------- */
+namespace vk_core {
+
+
 struct QueueFamilyIndices {
 
 	std::optional<uint32_t> graphics_family;
@@ -43,7 +45,6 @@ const std::vector<const char*> DEVICE_EXTENSIONS = { VK_KHR_SWAPCHAIN_EXTENSION_
 #else
 	const bool ENABLE_VALIDATION_LAYERS = false;
 #endif
-/* -------------------- -------------------- */
 
 
 // Initialize the Vulkan library
@@ -110,3 +111,6 @@ QueueFamilyIndices check_queue_families(VkPhysicalDevice physical_device, VkSurf
 
 // Print physical devices features in detail
 void print_physical_devices(VkPhysicalDevice dev);
+
+
+} // namespace vk_core
