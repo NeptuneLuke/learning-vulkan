@@ -159,7 +159,9 @@ void select_physical_device(VkPhysicalDevice& physical_device, VkInstance instan
 }
 
 
-void create_logical_device(VkDevice& device, VkPhysicalDevice physical_device, VkInstance instance, VkSurfaceKHR surface, VkQueue& queue_graphics, VkQueue& queue_present) {
+void create_logical_device(VkDevice& device, VkPhysicalDevice physical_device,
+	                       VkInstance instance, VkSurfaceKHR surface,
+	                       VkQueue& queue_graphics, VkQueue& queue_present) {
 
 	LOG_MESSAGE("Creating Vulkan Logical Device...", Color::Yellow, Color::Black, 0);
 
@@ -401,6 +403,48 @@ VkExtent2D choose_swapchain_extent(GLFWwindow* window, const VkSurfaceCapabiliti
 
 		return extent;
 	}
+}
+
+
+void create_image_views(std::vector<VkImageView> swapchain_image_views,
+	                    std::vector<VkImage> swapchain_images,
+	                    VkFormat swapchain_image_format,
+	                    VkDevice device) {
+
+	LOG_MESSAGE("Creating Vulkan Image Views...", Color::Yellow, Color::Black, 0);
+
+	swapchain_image_views.resize(swapchain_images.size());
+
+	for (size_t i = 0; i < swapchain_images.size(); i++) {
+
+		VkImageViewCreateInfo image_view_info{};
+		image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		image_view_info.image = swapchain_images[i];
+
+		// The type of the image
+		image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D; // images will be 2D textures
+		image_view_info.format = swapchain_image_format;
+
+		// Set color channels
+		image_view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		image_view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		image_view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		image_view_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+		// Image purpose
+		image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT; // used as color targets
+		image_view_info.subresourceRange.baseMipLevel = 0; // no mipmapping
+		image_view_info.subresourceRange.levelCount = 1;
+		image_view_info.subresourceRange.baseArrayLayer = 0;
+		image_view_info.subresourceRange.layerCount = 1; // no multiple layers
+
+
+		if (vkCreateImageView(device, &image_view_info, nullptr, &swapchain_image_views[i]) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to create Vulkan Image Views! \033[0m \n");
+		}
+	}
+
+	LOG_MESSAGE("Vulkan Image Views created. \n", Color::Yellow, Color::Black, 0);
 }
 
 

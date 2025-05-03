@@ -60,7 +60,10 @@ void select_physical_device(VkPhysicalDevice& physical_device, VkInstance instan
 
 
 // Initialize Logical Device
-void create_logical_device(VkDevice& device, VkPhysicalDevice physical_device, VkInstance instance, VkSurfaceKHR surface, VkQueue& queue_graphics, VkQueue& queue_present);
+void create_logical_device(
+	VkDevice& device, VkPhysicalDevice physical_device,
+	VkInstance instance, VkSurfaceKHR surface,
+	VkQueue& queue_graphics, VkQueue& queue_present);
 
 
 // Initialize Swapchain
@@ -85,6 +88,14 @@ VkPresentModeKHR choose_swapchain_present_mode(const std::vector<VkPresentModeKH
 
 // Set the resolution of the images in the swapchain
 VkExtent2D choose_swapchain_extent(GLFWwindow* window, const VkSurfaceCapabilitiesKHR& capabilities);
+
+
+// Initialize Image Views
+void create_image_views(
+	std::vector<VkImageView> swapchain_image_views,
+	std::vector<VkImage> swapchain_images,
+	VkFormat swapchain_image_format,
+	VkDevice device);
 
 
 // Check which validation layers are available

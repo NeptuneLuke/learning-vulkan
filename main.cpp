@@ -58,6 +58,8 @@ private:
 	std::vector<VkImage> swapchain_images; // implicitly destroyed in vkDestroySwapchainKHR()
 	VkFormat swapchain_image_format;
 	VkExtent2D swapchain_extent;
+	std::vector<VkImageView> swapchain_image_views;
+
 
 	/* -------------------- -------------------- */
 	// Initialize a GLFW window
@@ -87,6 +89,10 @@ private:
 		vk_core::create_swapchain(swapchain, swapchain_images,
 			                      swapchain_image_format, swapchain_extent,
 			                      surface, window, physical_device, device);
+
+		vk_core::create_image_views(swapchain_image_views,
+			                        swapchain_images, swapchain_image_format,
+			                        device);
 	}
 
 
@@ -103,6 +109,11 @@ private:
 
 	// Deallocate resources in opposite order of creation
 	void cleanup() {
+
+		LOG_MESSAGE("Destroying the Vulkan Image Views...", Color::Bright_Blue, Color::Black, 0);
+		for (auto imgv : swapchain_image_views) {
+			vkDestroyImageView(device, imgv, nullptr);
+		}
 
 		LOG_MESSAGE("Destroying the Vulkan Swapchain...", Color::Bright_Blue, Color::Black, 0);
 		vkDestroySwapchainKHR(device, swapchain, nullptr);
