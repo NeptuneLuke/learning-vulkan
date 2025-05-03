@@ -54,6 +54,9 @@ private:
 	VkQueue queue_present;
 
 	VkSwapchainKHR swapchain;
+	std::vector<VkImage> swapchain_images; // implicitly destroyed in vkDestroySwapchainKHR()
+	VkFormat swapchain_image_format;
+	VkExtent2D swapchain_extent;
 
 	/* -------------------- -------------------- */
 	// Initialize a GLFW window
@@ -78,7 +81,7 @@ private:
 
 		create_logical_device(device, physical_device, instance, surface, queue_graphics, queue_present);
 
-		create_swapchain(swapchain, surface, window, physical_device, device);
+		create_swapchain(swapchain, swapchain_images, swapchain_image_format, swapchain_extent, surface, window, physical_device, device);
 	}
 
 

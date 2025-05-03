@@ -63,7 +63,11 @@ void create_logical_device(VkDevice& device, VkPhysicalDevice physical_device, V
 
 
 // Initialize Swapchain
-void create_swapchain(VkSwapchainKHR& swapchain, VkSurfaceKHR surface, GLFWwindow* window, VkPhysicalDevice physical_device, VkDevice device);
+void create_swapchain(
+	VkSwapchainKHR& swapchain, std::vector<VkImage> swapchain_images,
+	VkFormat swapchain_image_format, VkExtent2D swapchain_extent,
+	VkSurfaceKHR surface, GLFWwindow* window,
+	VkPhysicalDevice physical_device, VkDevice device);
 
 
 // Query for specific swapchain features/details
