@@ -25,7 +25,7 @@ void create_vk_instance(VkInstance& instance) {
 	app_info.pApplicationName = "Hello Triangle";
 	app_info.applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
 	app_info.pEngineName = "No Engine";
-	app_info.apiVersion = VK_API_VERSION_1_4; // Vulkan API version
+	app_info.apiVersion = VK_API_VERSION_1_3; // Vulkan API version
 
 
 	/*
