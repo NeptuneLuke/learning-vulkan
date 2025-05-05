@@ -210,4 +210,36 @@ VkShaderModule create_shader_module(const std::vector<char>& shader_code, VkDevi
 	return shader_module;
 }
 
+
+void create_framebuffers(std::vector<VkFramebuffer>& swapchain_framebuffers,
+	                     std::vector<VkImageView> swapchain_image_views,
+	                     VkExtent2D swapchain_extent,
+	                     VkDevice device, VkRenderPass render_pass) {
+
+	LOG_MESSAGE("Creating Vulkan Framebuffers...", Color::Yellow, Color::Black, 0);
+
+	swapchain_framebuffers.resize(swapchain_image_views.size());
+
+	for (size_t i=0; i < swapchain_image_views.size(); i++) {
+
+		VkImageView attachments[] = { swapchain_image_views[i]};
+
+		VkFramebufferCreateInfo framebuffer_info{};
+		framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebuffer_info.renderPass = render_pass;
+		framebuffer_info.attachmentCount = 1;
+		framebuffer_info.pAttachments = attachments;
+		framebuffer_info.width = swapchain_extent.width;
+		framebuffer_info.height = swapchain_extent.height;
+		framebuffer_info.layers = 1;
+
+		if (vkCreateFramebuffer(device, &framebuffer_info, nullptr, &swapchain_framebuffers[i]) != VK_SUCCESS) {
+			std::cout << "\033[31;40m";
+			throw std::runtime_error("Failed to create Vulkan Framebuffer! \033[0m \n");
+		}
+	}
+
+	LOG_MESSAGE("Vulkan Framebuffers created. \n", Color::Yellow, Color::Black, 0);
+}
+
 } // namespace vk_pipeline

@@ -60,6 +60,7 @@ private:
 	VkFormat swapchain_image_format;
 	VkExtent2D swapchain_extent;
 	std::vector<VkImageView> swapchain_image_views;
+	std::vector<VkFramebuffer> swapchain_framebuffers;
 
 	VkPipeline pipeline;
 	VkPipelineLayout pipeline_layout;
@@ -103,6 +104,11 @@ private:
 		vk_pipeline::create_renderpass(render_pass, device, swapchain_image_format);
 
 		vk_pipeline::create_pipeline(pipeline, pipeline_layout, render_pass, device);
+
+		vk_pipeline::create_framebuffers(swapchain_framebuffers,
+			                             swapchain_image_views,
+			                             swapchain_extent,
+			                             device, render_pass);
 	}
 
 
@@ -120,6 +126,11 @@ private:
 
 	// Deallocate resources in opposite order of creation
 	void cleanup() {
+
+		LOG_MESSAGE("Destroying the Vulkan Swapchain Framebuffers...", Color::Bright_Blue, Color::Black, 0);
+		for (auto framebuffer : swapchain_framebuffers) {
+			vkDestroyFramebuffer(device, framebuffer, nullptr);
+		}
 
 		LOG_MESSAGE("Destroying the Vulkan Pipeline...", Color::Bright_Blue, Color::Black, 0);
 		vkDestroyPipeline(device, pipeline, nullptr);
