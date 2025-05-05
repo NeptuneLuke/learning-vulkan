@@ -61,7 +61,9 @@ private:
 	VkExtent2D swapchain_extent;
 	std::vector<VkImageView> swapchain_image_views;
 
+	VkPipeline pipeline;
 	VkPipelineLayout pipeline_layout;
+	VkRenderPass render_pass;
 	/* -------------------- -------------------- */
 
 
@@ -98,7 +100,9 @@ private:
 			                        swapchain_images, swapchain_image_format,
 			                        device);
 
-		vk_pipeline::create_pipeline(pipeline_layout, device);
+		vk_pipeline::create_renderpass(render_pass, device, swapchain_image_format);
+
+		vk_pipeline::create_pipeline(pipeline, pipeline_layout, render_pass, device);
 	}
 
 
@@ -118,7 +122,13 @@ private:
 	void cleanup() {
 
 		LOG_MESSAGE("Destroying the Vulkan Pipeline...", Color::Bright_Blue, Color::Black, 0);
+		vkDestroyPipeline(device, pipeline, nullptr);
+
+		LOG_MESSAGE("Destroying the Vulkan Pipeline Layout...", Color::Bright_Blue, Color::Black, 4);
 		vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+
+		LOG_MESSAGE("Destroying the Vulkan Render pass...", Color::Bright_Blue, Color::Black, 0);
+		vkDestroyRenderPass(device, render_pass, nullptr);
 
 		LOG_MESSAGE("Destroying the Vulkan Image Views...", Color::Bright_Blue, Color::Black, 0);
 		for (auto imgv : swapchain_image_views) {
@@ -136,7 +146,7 @@ private:
 		vkDestroySurfaceKHR(instance, surface, nullptr);
 
 		LOG_MESSAGE("Destroying the Vulkan Instance...", Color::Bright_Blue, Color::Black, 0);
-		LOG_MESSAGE("Releasing the Vulkan Physical Device...", Color::Bright_Blue, Color::Black, 4);
+		LOG_MESSAGE("Releasing the Physical Device...", Color::Bright_Blue, Color::Black, 4);
 		vkDestroyInstance(instance, nullptr);
 
 		glfwDestroyWindow(window);

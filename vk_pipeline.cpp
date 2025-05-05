@@ -12,9 +12,12 @@ using namespace my_util; // my_util.hpp
 namespace vk_pipeline {
 
 
-void create_pipeline(VkPipelineLayout pipeline_layout, VkDevice device) {
+void create_pipeline(VkPipeline& pipeline, VkPipelineLayout& pipeline_layout,
+	                 VkRenderPass render_pass, VkDevice device) {
 
 	LOG_MESSAGE("Creating Vulkan Pipeline...", Color::Yellow, Color::Black, 0);
+
+	// Creating Shader modules
 	LOG_MESSAGE("Creating Shader modules...", Color::Bright_White, Color::Black, 4);
 
 	auto vert_shader = read_file("shaders/vert.spv");
@@ -38,26 +41,24 @@ void create_pipeline(VkPipelineLayout pipeline_layout, VkDevice device) {
 	VkPipelineShaderStageCreateInfo shader_stages[] = {
 		vert_shader_info, frag_shader_info };
 
-	LOG_MESSAGE("Shader modules attached to the pipeline", Color::Bright_White, Color::Black, 4);
+	LOG_MESSAGE("Shader modules attached to the pipeline.", Color::Bright_White, Color::Black, 4);
 
 
+	// Setting up Pipeline features
 	VkPipelineVertexInputStateCreateInfo vertex_input_info{};
 	vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	vertex_input_info.vertexBindingDescriptionCount = 0;
 	vertex_input_info.vertexAttributeDescriptionCount = 0;
-
 
 	VkPipelineInputAssemblyStateCreateInfo input_assembly{};
 	input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	input_assembly.primitiveRestartEnable = VK_FALSE;
 
-
 	VkPipelineViewportStateCreateInfo viewport_state_info{};
 	viewport_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewport_state_info.viewportCount = 1;
 	viewport_state_info.scissorCount = 1;
-
 
 	VkPipelineRasterizationStateCreateInfo rasterizer_info{};
 	rasterizer_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -69,12 +70,10 @@ void create_pipeline(VkPipelineLayout pipeline_layout, VkDevice device) {
 	rasterizer_info.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	rasterizer_info.depthBiasEnable = VK_FALSE;
 
-
 	VkPipelineMultisampleStateCreateInfo multisampling_info{};
 	multisampling_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisampling_info.sampleShadingEnable = VK_FALSE;
 	multisampling_info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-
 
 	VkPipelineColorBlendAttachmentState color_blend_attachment{};
 	color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
@@ -94,7 +93,6 @@ void create_pipeline(VkPipelineLayout pipeline_layout, VkDevice device) {
 	color_blending_info.blendConstants[2] = 0.0f;
 	color_blending_info.blendConstants[3] = 0.0f;
 
-
 	std::vector<VkDynamicState> dynamic_states = {
 		VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
@@ -103,6 +101,9 @@ void create_pipeline(VkPipelineLayout pipeline_layout, VkDevice device) {
 	dynamic_state_info.dynamicStateCount = static_cast<uint32_t>(dynamic_states.size());
 	dynamic_state_info.pDynamicStates = dynamic_states.data();
 
+
+	// Creating Pipeline layout
+	LOG_MESSAGE("Creating Vulkan Pipeline layout...", Color::Bright_White, Color::Black, 4);
 
 	VkPipelineLayoutCreateInfo pipeline_layout_info{};
 	pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -113,11 +114,83 @@ void create_pipeline(VkPipelineLayout pipeline_layout, VkDevice device) {
 		std::cout << "\033[31;40m";
 		throw std::runtime_error("Failed to create Vulkan Pipeline! \033[0m \n");
 	}
+	LOG_MESSAGE("Vulkan Pipeline layout created.", Color::Bright_White, Color::Black, 4);
 
+
+	// Creating Pipeline
+
+	VkGraphicsPipelineCreateInfo pipeline_info{};
+	pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	pipeline_info.stageCount = 2;
+	pipeline_info.pStages = shader_stages;
+	pipeline_info.pVertexInputState = &vertex_input_info;
+	pipeline_info.pInputAssemblyState = &input_assembly;
+	pipeline_info.pViewportState = &viewport_state_info;
+	pipeline_info.pRasterizationState = &rasterizer_info;
+	pipeline_info.pMultisampleState = &multisampling_info;
+	pipeline_info.pColorBlendState = &color_blending_info;
+	pipeline_info.pDynamicState = &dynamic_state_info;
+	pipeline_info.layout = pipeline_layout;
+	pipeline_info.renderPass = render_pass;
+	pipeline_info.subpass = 0;
+	pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
+
+	if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &pipeline) != VK_SUCCESS) {
+		std::cout << "\033[31;40m";
+		throw std::runtime_error("Failed to create Vulkan Pipeline! \033[0m \n");
+	}
 	LOG_MESSAGE("Vulkan Pipeline created. \n", Color::Yellow, Color::Black, 0);
 
 	vkDestroyShaderModule(device, frag_shader_module, nullptr);
 	vkDestroyShaderModule(device, vert_shader_module, nullptr);
+}
+
+
+void create_renderpass(VkRenderPass& render_pass, VkDevice device, VkFormat swapchain_image_format) {
+
+	LOG_MESSAGE("Creating Vulkan Render pass...", Color::Yellow, Color::Black, 0);
+
+	// Single color buffer attachment as one of the images from the swapchain
+	VkAttachmentDescription color_attachment{};
+	color_attachment.format = swapchain_image_format; // format of color attachment should match with format of swapchain images
+	color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+
+	// This refers to color and depth data
+	color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;   // what to do before rendering (clear the framebuffer to black before drawing a new frame)
+	color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE; // what to do after rendering (render the triangle on the screen, so store it)
+
+	// This refers to stencil data.
+	// We don't use stencil buffer, so we do not care.
+	color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED; // we don't care what previous layout the image was in
+	color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // the image must be ready for presentation using the swapchain after rendering
+
+
+	VkAttachmentReference color_attachment_ref{};
+	color_attachment_ref.attachment = 0;
+	color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subpass{};
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.colorAttachmentCount = 1;
+	subpass.pColorAttachments = &color_attachment_ref;
+
+
+	VkRenderPassCreateInfo render_pass_info{};
+	render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	render_pass_info.attachmentCount = 1;
+	render_pass_info.pAttachments = &color_attachment;
+	render_pass_info.subpassCount = 1;
+	render_pass_info.pSubpasses = &subpass;
+
+	if (vkCreateRenderPass(device, &render_pass_info, nullptr, &render_pass) != VK_SUCCESS) {
+		std::cout << "\033[31;40m";
+		throw std::runtime_error("Failed to create Vulkan Render pass! \033[0m \n");
+	}
+
+	LOG_MESSAGE("Vulkan Render pass created. \n", Color::Yellow, Color::Black, 0);
 }
 
 
