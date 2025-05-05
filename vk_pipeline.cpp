@@ -1,4 +1,5 @@
 #include "vk_pipeline.hpp"
+#include "vk_core.hpp"
 #include "my_util.hpp"
 
 #include <iostream>
@@ -240,6 +241,113 @@ void create_framebuffers(std::vector<VkFramebuffer>& swapchain_framebuffers,
 	}
 
 	LOG_MESSAGE("Vulkan Framebuffers created. \n", Color::Yellow, Color::Black, 0);
+}
+
+
+void create_command_pool(VkCommandPool& command_pool,
+	                     VkPhysicalDevice physical_device, VkDevice device,
+	                     VkSurfaceKHR surface) {
+
+	LOG_MESSAGE("Creating Vulkan Command Pool...", Color::Yellow, Color::Black, 0);
+
+	vk_core::QueueFamilyIndices queue_family_indices =
+		vk_core::check_queue_families(physical_device, surface);
+
+	VkCommandPoolCreateInfo command_pool_info{};
+	command_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	command_pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	command_pool_info.queueFamilyIndex = queue_family_indices.graphics_family.value();
+
+	if (vkCreateCommandPool(device, &command_pool_info, nullptr, &command_pool) != VK_SUCCESS) {
+		std::cout << "\033[31;40m";
+		throw std::runtime_error("Failed to create Vulkan Command Pool! \033[0m \n");
+	}
+
+	LOG_MESSAGE("Vulkan Command Pool created. \n", Color::Yellow, Color::Black, 0);
+}
+
+
+void create_command_buffer(VkCommandBuffer& command_buffer, VkCommandPool command_pool,
+	                       VkDevice device) {
+
+	LOG_MESSAGE("Creating Vulkan Command buffer(s)...", Color::Yellow, Color::Black, 0);
+
+	VkCommandBufferAllocateInfo command_buffer_info{};
+	command_buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	command_buffer_info.commandPool = command_pool;
+	command_buffer_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	command_buffer_info.commandBufferCount = 1;
+
+	if (vkAllocateCommandBuffers(device, &command_buffer_info, &command_buffer) != VK_SUCCESS) {
+		std::cout << "\033[31;40m";
+		throw std::runtime_error("Failed to allocate Command buffer(s)! \033[0m \n");
+	}
+
+	LOG_MESSAGE("Vulkan Command buffer(s) created. \n", Color::Yellow, Color::Black, 0);
+}
+
+
+void record_command_buffer(VkCommandBuffer command_buffer, uint32_t swapchain_image_index,
+	                       VkPipeline pipeline, VkRenderPass render_pass,
+	                       std::vector<VkFramebuffer> swapchain_framebuffers,
+	                       VkExtent2D swapchain_extent) {
+
+	LOG_MESSAGE("Registering Command buffer(s)...", Color::Yellow, Color::Black, 0);
+
+	VkCommandBufferBeginInfo command_buffer_info{};
+	command_buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+	if (vkBeginCommandBuffer(command_buffer, &command_buffer_info) != VK_SUCCESS) {
+		std::cout << "\033[31;40m";
+		throw std::runtime_error("Failed to begin recording Command Buffer! \033[0m \n");
+	}
+
+	VkRenderPassBeginInfo render_pass_info{};
+	render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	render_pass_info.renderPass = render_pass;
+	render_pass_info.framebuffer = swapchain_framebuffers[swapchain_image_index];
+	render_pass_info.renderArea.offset = { 0, 0 };
+	render_pass_info.renderArea.extent = swapchain_extent;
+
+	// The color that clears the screen after rendering
+	VkClearValue clear_color = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
+	render_pass_info.clearValueCount = 1;
+	render_pass_info.pClearValues = &clear_color;
+
+	vkCmdBeginRenderPass(command_buffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+
+	vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+	VkViewport viewport{};
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewport.width = (float)swapchain_extent.width;
+	viewport.height = (float)swapchain_extent.height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+
+	VkRect2D scissor{};
+	scissor.offset = { 0, 0 };
+	scissor.extent = swapchain_extent;
+	vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+
+
+	// Draw command of the triangle
+	// 3 is the number of vertices in the vertex buffer, that we are not actually using now,
+	// but we specify it anyway
+	// 1, 0, 0 are just default values
+	vkCmdDraw(command_buffer, 3, 1, 0, 0);
+
+	vkCmdEndRenderPass(command_buffer);
+
+
+	if (vkEndCommandBuffer(command_buffer) != VK_SUCCESS) {
+		std::cout << "\033[31;40m";
+		throw std::runtime_error("Failed to record Command Buffer! \033[0m \n");
+	}
+
+	LOG_MESSAGE("Command buffer(s) registered. \n", Color::Yellow, Color::Black, 0);
 }
 
 } // namespace vk_pipeline

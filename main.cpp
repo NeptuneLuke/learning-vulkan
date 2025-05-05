@@ -65,6 +65,9 @@ private:
 	VkPipeline pipeline;
 	VkPipelineLayout pipeline_layout;
 	VkRenderPass render_pass;
+
+	VkCommandPool command_pool;
+	VkCommandBuffer command_buffer;
 	/* -------------------- -------------------- */
 
 
@@ -109,6 +112,10 @@ private:
 			                             swapchain_image_views,
 			                             swapchain_extent,
 			                             device, render_pass);
+
+		vk_pipeline::create_command_pool(command_pool, physical_device, device, surface);
+
+		vk_pipeline::create_command_buffer(command_buffer, command_pool, device);
 	}
 
 
@@ -127,37 +134,40 @@ private:
 	// Deallocate resources in opposite order of creation
 	void cleanup() {
 
-		LOG_MESSAGE("Destroying the Vulkan Swapchain Framebuffers...", Color::Bright_Blue, Color::Black, 0);
+		LOG_MESSAGE("Destroying Vulkan Command Pool...", Color::Bright_Blue, Color::Black, 0);
+		vkDestroyCommandPool(device, command_pool, nullptr);
+
+		LOG_MESSAGE("Destroying Vulkan Swapchain Framebuffers...", Color::Bright_Blue, Color::Black, 0);
 		for (auto framebuffer : swapchain_framebuffers) {
 			vkDestroyFramebuffer(device, framebuffer, nullptr);
 		}
 
-		LOG_MESSAGE("Destroying the Vulkan Pipeline...", Color::Bright_Blue, Color::Black, 0);
+		LOG_MESSAGE("Destroying Vulkan Pipeline...", Color::Bright_Blue, Color::Black, 0);
 		vkDestroyPipeline(device, pipeline, nullptr);
 
-		LOG_MESSAGE("Destroying the Vulkan Pipeline Layout...", Color::Bright_Blue, Color::Black, 4);
+		LOG_MESSAGE("Destroying Vulkan Pipeline Layout...", Color::Bright_Blue, Color::Black, 4);
 		vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
 
-		LOG_MESSAGE("Destroying the Vulkan Render pass...", Color::Bright_Blue, Color::Black, 0);
+		LOG_MESSAGE("Destroying Vulkan Render pass...", Color::Bright_Blue, Color::Black, 0);
 		vkDestroyRenderPass(device, render_pass, nullptr);
 
-		LOG_MESSAGE("Destroying the Vulkan Image Views...", Color::Bright_Blue, Color::Black, 0);
+		LOG_MESSAGE("Destroying Vulkan Image Views...", Color::Bright_Blue, Color::Black, 0);
 		for (auto imgv : swapchain_image_views) {
 			vkDestroyImageView(device, imgv, nullptr);
 		}
 
-		LOG_MESSAGE("Destroying the Vulkan Swapchain...", Color::Bright_Blue, Color::Black, 0);
+		LOG_MESSAGE("Destroying Vulkan Swapchain...", Color::Bright_Blue, Color::Black, 0);
 		vkDestroySwapchainKHR(device, swapchain, nullptr);
 
-		LOG_MESSAGE("Destroying the Vulkan Logical Device...", Color::Bright_Blue, Color::Black, 0);
+		LOG_MESSAGE("Destroying Vulkan Logical Device...", Color::Bright_Blue, Color::Black, 0);
 		LOG_MESSAGE("Destroying Queues...", Color::Bright_Blue, Color::Black, 4);
 		vkDestroyDevice(device, nullptr);
 
-		LOG_MESSAGE("Destroying the Vulkan-Windows Surface...", Color::Bright_Blue, Color::Black, 0);
+		LOG_MESSAGE("Destroying Vulkan-Windows Surface...", Color::Bright_Blue, Color::Black, 0);
 		vkDestroySurfaceKHR(instance, surface, nullptr);
 
-		LOG_MESSAGE("Destroying the Vulkan Instance...", Color::Bright_Blue, Color::Black, 0);
-		LOG_MESSAGE("Releasing the Physical Device...", Color::Bright_Blue, Color::Black, 4);
+		LOG_MESSAGE("Destroying Vulkan Instance...", Color::Bright_Blue, Color::Black, 0);
+		LOG_MESSAGE("Releasing Physical Device...", Color::Bright_Blue, Color::Black, 4);
 		vkDestroyInstance(instance, nullptr);
 
 		glfwDestroyWindow(window);

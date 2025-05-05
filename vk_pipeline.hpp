@@ -27,4 +27,25 @@ void create_framebuffers(
 	VkExtent2D swapchain_extent,
 	VkDevice device, VkRenderPass render_pass);
 
+
+// Initialize Command Pool
+void create_command_pool(
+	VkCommandPool& command_pool,
+	VkPhysicalDevice physical_device, VkDevice device,
+	VkSurfaceKHR surface);
+
+
+// Initialize Command buffer
+void create_command_buffer(
+	VkCommandBuffer& command_buffer, VkCommandPool command_pool,
+	VkDevice device);
+
+
+// Write commands
+void record_command_buffer(
+	VkCommandBuffer command_buffer, uint32_t swapchain_image_index,
+	VkPipeline pipeline, VkRenderPass render_pass,
+	std::vector<VkFramebuffer> swapchain_framebuffers,
+	VkExtent2D swapchain_extent);
+
 } // namespace vk_pipeline
