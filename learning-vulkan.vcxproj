@@ -158,10 +158,13 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="my_util.cpp" />
     <ClCompile Include="vk_core.cpp" />
+    <ClCompile Include="vk_pipeline.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="my_util.hpp" />
     <ClInclude Include="vk_core.hpp" />
+    <ClInclude Include="vk_includes.hpp" />
+    <ClInclude Include="vk_pipeline.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

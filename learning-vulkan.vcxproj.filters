@@ -24,12 +24,21 @@
     <ClCompile Include="vk_core.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="vk_pipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="my_util.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vk_core.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vk_pipeline.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vk_includes.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

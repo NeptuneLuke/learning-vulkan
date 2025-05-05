@@ -1,4 +1,5 @@
 #include "vk_core.hpp"
+#include "vk_pipeline.hpp"
 #include "my_util.hpp"
 
 #include <iostream>		// reporting errors
@@ -62,6 +63,8 @@ private:
 
 
 	/* -------------------- -------------------- */
+
+
 	// Initialize a GLFW window
 	void init_window() {
 
@@ -72,6 +75,7 @@ private:
 
 		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan tutorial", nullptr, nullptr);
 	}
+
 
 	// Initialize the Vulkan objects
 	void init_vulkan() {
@@ -93,6 +97,8 @@ private:
 		vk_core::create_image_views(swapchain_image_views,
 			                        swapchain_images, swapchain_image_format,
 			                        device);
+
+		vk_pipeline::create_pipeline();
 	}
 
 
@@ -106,6 +112,7 @@ private:
 		}
 
 	}
+
 
 	// Deallocate resources in opposite order of creation
 	void cleanup() {
@@ -126,14 +133,13 @@ private:
 		vkDestroySurfaceKHR(instance, surface, nullptr);
 
 		LOG_MESSAGE("Destroying the Vulkan Instance...", Color::Bright_Blue, Color::Black, 0);
-		LOG_MESSAGE("Destroying the Vulkan Physical Device...", Color::Bright_Blue, Color::Black, 4);
+		LOG_MESSAGE("Releasing the Vulkan Physical Device...", Color::Bright_Blue, Color::Black, 4);
 		vkDestroyInstance(instance, nullptr);
 
 		glfwDestroyWindow(window);
 
 		glfwTerminate(); // Shutdown GLFW library
 	}
-	/* -------------------- -------------------- */
 };
 
 
