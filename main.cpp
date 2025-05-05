@@ -61,7 +61,7 @@ private:
 	VkExtent2D swapchain_extent;
 	std::vector<VkImageView> swapchain_image_views;
 
-
+	VkPipelineLayout pipeline_layout;
 	/* -------------------- -------------------- */
 
 
@@ -98,7 +98,7 @@ private:
 			                        swapchain_images, swapchain_image_format,
 			                        device);
 
-		vk_pipeline::create_pipeline(device);
+		vk_pipeline::create_pipeline(pipeline_layout, device);
 	}
 
 
@@ -116,6 +116,9 @@ private:
 
 	// Deallocate resources in opposite order of creation
 	void cleanup() {
+
+		LOG_MESSAGE("Destroying the Vulkan Pipeline...", Color::Bright_Blue, Color::Black, 0);
+		vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
 
 		LOG_MESSAGE("Destroying the Vulkan Image Views...", Color::Bright_Blue, Color::Black, 0);
 		for (auto imgv : swapchain_image_views) {
