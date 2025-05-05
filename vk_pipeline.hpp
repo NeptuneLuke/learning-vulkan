@@ -48,4 +48,13 @@ void record_command_buffer(
 	std::vector<VkFramebuffer> swapchain_framebuffers,
 	VkExtent2D swapchain_extent);
 
+
+// Initialize semaphores and fences
+void create_sync_objects(
+	VkSemaphore& semaphore_image_available,
+	VkSemaphore& semaphore_render_finished,
+	VkFence& fence_in_flight,
+	VkDevice device);
+
+
 } // namespace vk_pipeline

@@ -68,6 +68,10 @@ private:
 
 	VkCommandPool command_pool;
 	VkCommandBuffer command_buffer;
+
+	VkSemaphore semaphore_image_available;
+	VkSemaphore semaphore_render_finished;
+	VkFence fence_in_flight;
 	/* -------------------- -------------------- */
 
 
@@ -116,6 +120,9 @@ private:
 		vk_pipeline::create_command_pool(command_pool, physical_device, device, surface);
 
 		vk_pipeline::create_command_buffer(command_buffer, command_pool, device);
+
+		vk_pipeline::create_sync_objects(semaphore_image_available, semaphore_render_finished,
+			                             fence_in_flight, device);
 	}
 
 
@@ -126,13 +133,84 @@ private:
 		while(!glfwWindowShouldClose(window)) {
 
 			glfwPollEvents();
+
+			draw_frame();
 		}
 
+		// All the operations in draw_frame() are asynchronous.
+		// When we exit the loop in main_loop(), some operations may still be going on.
+		// Cleaning up resources while that is happening should be avoided.
+		// The solution is wait for the logical device to finish operations.
+		vkDeviceWaitIdle(device);
+	}
+
+
+	// Render a single frame of a scene
+	void draw_frame() {
+
+		// Wait for the previous frame to finish
+		vkWaitForFences(device, 1, &fence_in_flight, VK_TRUE, UINT64_MAX);
+		vkResetFences(device, 1, &fence_in_flight);
+
+		uint32_t image_index = 0;
+		// Acquire an image from the swapchain
+		vkAcquireNextImageKHR(device, swapchain, UINT64_MAX,
+			                  semaphore_image_available, VK_NULL_HANDLE, &image_index);
+
+
+		// Record command buffer which draws the scene onto that image
+		vkResetCommandBuffer(command_buffer, /*VkCommandBufferResetFlagBits*/ 0);
+		vk_pipeline::record_command_buffer(command_buffer, image_index,
+			                               pipeline, render_pass,
+			                               swapchain_framebuffers, swapchain_extent);
+
+
+		// Submit the command buffer
+		VkSubmitInfo submit_commandbuffer_info{};
+		submit_commandbuffer_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+		VkSemaphore semaphores_wait[] = { semaphore_image_available };
+		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		submit_commandbuffer_info.waitSemaphoreCount = 1;
+		submit_commandbuffer_info.pWaitSemaphores = semaphores_wait;
+		submit_commandbuffer_info.pWaitDstStageMask = waitStages;
+
+		submit_commandbuffer_info.commandBufferCount = 1;
+		submit_commandbuffer_info.pCommandBuffers = &command_buffer;
+
+		VkSemaphore semaphores_signal[] = { semaphore_render_finished };
+		submit_commandbuffer_info.signalSemaphoreCount = 1;
+		submit_commandbuffer_info.pSignalSemaphores = semaphores_signal;
+
+
+		if (vkQueueSubmit(queue_graphics, 1, &submit_commandbuffer_info, fence_in_flight) != VK_SUCCESS) {
+			std::cout << "\033[31;40m";
+			throw std::runtime_error("Failed to submit draw Command Buffer! \033[0m \n");
+		}
+
+
+		// Present the swapchain image
+		VkPresentInfoKHR present_info{};
+		present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		present_info.waitSemaphoreCount = 1;
+		present_info.pWaitSemaphores = semaphores_signal;
+
+		VkSwapchainKHR swapchains[] = { swapchain };
+		present_info.swapchainCount = 1;
+		present_info.pSwapchains = swapchains;
+		present_info.pImageIndices = &image_index;
+
+		vkQueuePresentKHR(queue_present, &present_info);
 	}
 
 
 	// Deallocate resources in opposite order of creation
 	void cleanup() {
+
+		LOG_MESSAGE("Destroying Vulkan Semaphore(s) and Fence(s)...", Color::Bright_Blue, Color::Black, 0);
+		vkDestroySemaphore(device, semaphore_image_available, nullptr);
+		vkDestroySemaphore(device, semaphore_render_finished, nullptr);
+		vkDestroyFence(device, fence_in_flight, nullptr);
 
 		LOG_MESSAGE("Destroying Vulkan Command Pool...", Color::Bright_Blue, Color::Black, 0);
 		vkDestroyCommandPool(device, command_pool, nullptr);

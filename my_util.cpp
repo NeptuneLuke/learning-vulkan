@@ -73,7 +73,7 @@ std::vector<char> read_file(const std::string& file_path) {
 
 	if (!file.is_open()) {
 		std::cout << "\033[31;40m";
-		throw std::runtime_error("Failed to open file! \033[0m \n");
+		throw std::runtime_error("Failed to open file: " + file_path + " \033[0m \n");
 	}
 
 	// Get file size and create a buffer for the file's contents
@@ -88,5 +88,6 @@ std::vector<char> read_file(const std::string& file_path) {
 
 	return file_buffer;
 }
+
 
 } // namespace my_util

@@ -27,6 +27,13 @@ void create_pipeline(VkPipeline& pipeline, VkPipelineLayout& pipeline_layout,
 	VkShaderModule vert_shader_module = create_shader_module(vert_shader, device);
 	VkShaderModule frag_shader_module = create_shader_module(frag_shader, device);
 
+	if (vert_shader_module == VK_NULL_HANDLE ) {
+		LOG_MESSAGE("Shader file: shader.vert", Color::Red, Color::Black, 0);
+	}
+	if (frag_shader_module == VK_NULL_HANDLE) {
+		LOG_MESSAGE("Shader file: shader.frag", Color::Red, Color::Black, 0);
+	}
+
 	VkPipelineShaderStageCreateInfo vert_shader_info{};
 	vert_shader_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	vert_shader_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -220,10 +227,11 @@ void create_framebuffers(std::vector<VkFramebuffer>& swapchain_framebuffers,
 	LOG_MESSAGE("Creating Vulkan Framebuffers...", Color::Yellow, Color::Black, 0);
 
 	swapchain_framebuffers.resize(swapchain_image_views.size());
+	LOG_MESSAGE("Swapchain Framebuffer size: " + std::to_string(swapchain_framebuffers.size()), Color::Bright_White, Color::Black, 4);
 
 	for (size_t i=0; i < swapchain_image_views.size(); i++) {
 
-		VkImageView attachments[] = { swapchain_image_views[i]};
+		VkImageView attachments[] = { swapchain_image_views[i] };
 
 		VkFramebufferCreateInfo framebuffer_info{};
 		framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -305,7 +313,10 @@ void record_command_buffer(VkCommandBuffer command_buffer, uint32_t swapchain_im
 	VkRenderPassBeginInfo render_pass_info{};
 	render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	render_pass_info.renderPass = render_pass;
+
+	LOG_MESSAGE("Current swapchain image index: " + std::to_string(swapchain_image_index), Color::Bright_White, Color::Black, 4);
 	render_pass_info.framebuffer = swapchain_framebuffers[swapchain_image_index];
+
 	render_pass_info.renderArea.offset = { 0, 0 };
 	render_pass_info.renderArea.extent = swapchain_extent;
 
@@ -349,5 +360,30 @@ void record_command_buffer(VkCommandBuffer command_buffer, uint32_t swapchain_im
 
 	LOG_MESSAGE("Command buffer(s) registered. \n", Color::Yellow, Color::Black, 0);
 }
+
+
+void create_sync_objects(VkSemaphore& semaphore_image_available,
+	                     VkSemaphore& semaphore_render_finished,
+	                     VkFence& fence_in_flight,
+						 VkDevice device) {
+
+	LOG_MESSAGE("Creating Vulkan Semaphore(s) and Fence(s)...", Color::Yellow, Color::Black, 0);
+
+	VkSemaphoreCreateInfo semaphore_info{};
+	semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	VkFenceCreateInfo fence_info{};
+	fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+
+	if (vkCreateSemaphore(device, &semaphore_info, nullptr, &semaphore_image_available) != VK_SUCCESS ||
+		vkCreateSemaphore(device, &semaphore_info, nullptr, &semaphore_render_finished) != VK_SUCCESS ||
+		vkCreateFence(device, &fence_info, nullptr, &fence_in_flight) != VK_SUCCESS) {
+		std::cout << "\033[31;40m";
+		throw std::runtime_error("Failed to create Semaphore(s) and Fence(s)! \033[0m \n");
+	}
+
+	LOG_MESSAGE("Vulkan Semaphore(s) and Fence(s) created. \n", Color::Yellow, Color::Black, 0);
+}
+
 
 } // namespace vk_pipeline

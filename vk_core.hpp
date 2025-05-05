@@ -53,7 +53,7 @@ void create_logical_device(
 
 // Initialize Swapchain
 void create_swapchain(
-	VkSwapchainKHR& swapchain, std::vector<VkImage> swapchain_images,
+	VkSwapchainKHR& swapchain, std::vector<VkImage>& swapchain_images,
 	VkFormat swapchain_image_format, VkExtent2D swapchain_extent,
 	VkSurfaceKHR surface, GLFWwindow* window,
 	VkPhysicalDevice physical_device, VkDevice device);
@@ -77,7 +77,7 @@ VkExtent2D choose_swapchain_extent(GLFWwindow* window, const VkSurfaceCapabiliti
 
 // Initialize Image Views
 void create_image_views(
-	std::vector<VkImageView> swapchain_image_views,
+	std::vector<VkImageView>& swapchain_image_views,
 	std::vector<VkImage> swapchain_images,
 	VkFormat swapchain_image_format,
 	VkDevice device);

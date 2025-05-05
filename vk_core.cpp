@@ -226,7 +226,7 @@ void create_logical_device(VkDevice& device, VkPhysicalDevice physical_device,
 }
 
 
-void create_swapchain(VkSwapchainKHR& swapchain, std::vector<VkImage> swapchain_images,
+void create_swapchain(VkSwapchainKHR& swapchain, std::vector<VkImage>& swapchain_images,
 					  VkFormat swapchain_image_format, VkExtent2D swapchain_extent,
 	                  VkSurfaceKHR surface, GLFWwindow* window,
 	                  VkPhysicalDevice physical_device, VkDevice device) {
@@ -299,10 +299,11 @@ void create_swapchain(VkSwapchainKHR& swapchain, std::vector<VkImage> swapchain_
 		throw std::runtime_error("Failed to create Vulkan Swapchain! \033[0m \n");
 	}
 
-
 	vkGetSwapchainImagesKHR(device, swapchain, &images_count, nullptr);
 	swapchain_images.resize(images_count);
 	vkGetSwapchainImagesKHR(device, swapchain, &images_count, swapchain_images.data());
+
+	LOG_MESSAGE("Swapchain images: " + std::to_string(swapchain_images.size()), Color::Bright_White, Color::Black, 4);
 
 	swapchain_image_format = surface_format.format;
 	swapchain_extent = extent;
@@ -406,7 +407,7 @@ VkExtent2D choose_swapchain_extent(GLFWwindow* window, const VkSurfaceCapabiliti
 }
 
 
-void create_image_views(std::vector<VkImageView> swapchain_image_views,
+void create_image_views(std::vector<VkImageView>& swapchain_image_views,
 	                    std::vector<VkImage> swapchain_images,
 	                    VkFormat swapchain_image_format,
 	                    VkDevice device) {
@@ -415,7 +416,7 @@ void create_image_views(std::vector<VkImageView> swapchain_image_views,
 
 	swapchain_image_views.resize(swapchain_images.size());
 
-	for (size_t i = 0; i < swapchain_images.size(); i++) {
+	for (size_t i=0; i < swapchain_images.size(); i++) {
 
 		VkImageViewCreateInfo image_view_info{};
 		image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
