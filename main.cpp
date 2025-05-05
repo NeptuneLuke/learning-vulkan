@@ -3,7 +3,7 @@
 #include "my_util.hpp"
 
 #include <iostream>		// reporting errors
-#include <stdexcept>	// reporting errors
+#include <stdexcept>	// reporting errors: std::runtime_error()
 #include <cstdlib>		// miscellaneous utilities (EXIT_SUCCESS, EXIT_FAILURE)
 
 
@@ -98,7 +98,7 @@ private:
 			                        swapchain_images, swapchain_image_format,
 			                        device);
 
-		vk_pipeline::create_pipeline();
+		vk_pipeline::create_pipeline(device);
 	}
 
 

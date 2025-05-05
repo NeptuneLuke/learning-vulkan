@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 
 
 namespace my_util {
@@ -62,6 +63,30 @@ void LOG_MESSAGE(std::string message, Color text, Color background, uint16_t ind
 		std::cout << colors << message << "\033[0m \n";
 	}
 
+}
+
+
+std::vector<char> read_file(const std::string& file_path) {
+
+	// Read the file in binary mod starting at the end of the file
+	std::ifstream file(file_path, std::ios::ate | std::ios::binary);
+
+	if (!file.is_open()) {
+		std::cout << "\033[31;40m";
+		throw std::runtime_error("Failed to open file! \033[0m \n");
+	}
+
+	// Get file size and create a buffer for the file's contents
+	size_t file_size = (size_t) file.tellg();
+	std::vector<char> file_buffer(file_size);
+
+	// Go back at the beginning of the file and read all bytes
+	file.seekg(0);
+	file.read(file_buffer.data(), file_size);
+
+	file.close();
+
+	return file_buffer;
 }
 
 } // namespace my_util

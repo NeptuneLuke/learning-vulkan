@@ -2,7 +2,7 @@
 #include "my_util.hpp"
 
 #include <iostream>		// reporting errors
-#include <stdexcept>	// reporting errors
+#include <stdexcept>	// reporting errors: std::runtime_error()
 #include <string>
 #include <cstring>      // strcmp()
 #include <set>
@@ -45,7 +45,7 @@ void create_vk_instance(VkInstance& instance) {
 
 	if (ENABLE_VALIDATION_LAYERS && check_validation_layers_support() != VK_SUCCESS) {
 		std::cout << "\033[31;40m";
-		throw std::runtime_error("Validation layers not available!  \033[0m \n");
+		throw std::runtime_error("Validation layers not available! \033[0m \n");
 	}
 
 	if (ENABLE_VALIDATION_LAYERS) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 
 namespace my_util {
@@ -15,5 +16,6 @@ enum Color {
 
 void LOG_MESSAGE(std::string message, Color text, Color background, uint16_t indentation_width);
 
-}
 
+std::vector<char> read_file(const std::string& file_path);
+}
